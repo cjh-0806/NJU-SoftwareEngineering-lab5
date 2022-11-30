@@ -5,13 +5,15 @@
 //声明外部变量
 extern QVector<Pairs> equalPairsVec; //存放最终的所有等价程序对
 extern QVector<Pairs> inequalPairsVec; //存放最终的所有不等价程序对
+extern QVector<Pairs> doubtPairsVec; //存放最终的所有存疑程序对
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    flag = false;
+    importFlag = false;
+    exportFlag = false;
 }
 
 MainWindow::~MainWindow()
@@ -26,19 +28,20 @@ void MainWindow::on_importButton_clicked()
     if(dirpath.isEmpty())
         return;
     inputDirPath = dirpath.left(dirpath.lastIndexOf('/')); //去掉"/input"
-    qDebug() << inputDirPath;
+    //qDebug() << inputDirPath;
+
     //读取等价判断工具输出的等价程序对文件路径
     QString filepath = QFileDialog::getOpenFileName(this, "选择等价程序对文件", "", "CSV files(*.csv)");
     if(filepath.isEmpty())
         return;
     oldEqualFilePath = filepath;
-    qDebug() << filepath;
-    flag = true;
+    //qDebug() << filepath;
+    importFlag = true;
 }
 
 void MainWindow::on_startButton_clicked() //开始进行人工确认
 {
-    if(flag == false)
+    if(importFlag == false)
     {
         QMessageBox::warning(this, "警告", "文件未导入！");
         return;
@@ -54,7 +57,7 @@ void MainWindow::on_exportButton_clicked()
     QString dirpath = QFileDialog::getExistingDirectory(this, "选择结果输出文件夹");
     if(dirpath.isEmpty())
         return;
-    qDebug() << dirpath;
+    //qDebug() << dirpath;
     //存储等价程序对
     QFile equalfile(dirpath + "/equal.csv");
     if(equalfile.open(QIODevice::WriteOnly))
@@ -71,7 +74,7 @@ void MainWindow::on_exportButton_clicked()
     //存储不等价程序对
     QFile inequalFile(dirpath + "/inequal.csv");
     QString oldInequalFilePath = oldEqualFilePath.mid(0, oldEqualFilePath.length()-9) + "inequal.csv";
-    qDebug() << oldInequalFilePath;
+    //qDebug() << oldInequalFilePath;
     QFile oldInequalFile(oldInequalFilePath);
     if(inequalFile.open(QIODevice::WriteOnly) && oldInequalFile.open(QIODevice::ReadOnly))
     {
@@ -88,9 +91,28 @@ void MainWindow::on_exportButton_clicked()
         }
         inequalFile.close();
     }
+    //存储存疑程序对
+    QFile doubtfile(dirpath + "/doubt.csv");
+    if(doubtfile.open(QIODevice::WriteOnly))
+    {
+        QTextStream fout(&doubtfile);
+        for(auto pair : doubtPairsVec)
+        {
+            QString file1name = pair.file1.mid(inputDirPath.length()+1);
+            QString file2name = pair.file2.mid(inputDirPath.length()+1);
+            fout << file1name << ',' << file2name << endl;
+        }
+        doubtfile.close();
+    }
+    exportFlag = true;
 }
 
 void MainWindow::on_exitButton_clicked()
 {
+    if(exportFlag == false)
+    {
+        QMessageBox::warning(this, "警告", "结果未导出！");
+        return;
+    }
     this->close();
 }

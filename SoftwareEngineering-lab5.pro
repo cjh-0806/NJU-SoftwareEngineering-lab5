@@ -17,12 +17,16 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     confirmwidget.cpp \
+    dirinfo.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    unionfindset.cpp
 
 HEADERS += \
     confirmwidget.h \
-    mainwindow.h
+    dirinfo.h \
+    mainwindow.h \
+    unionfindset.h
 
 FORMS += \
     confirmwidget.ui \

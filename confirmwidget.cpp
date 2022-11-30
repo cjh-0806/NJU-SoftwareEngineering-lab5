@@ -4,12 +4,17 @@
 //全局变量
 QVector<Pairs> equalPairsVec; //存放最终的所有等价程序对
 QVector<Pairs> inequalPairsVec; //存放最终的所有不等价程序对
+QVector<Pairs> doubtPairsVec; //存放最终的存疑等价对
 
 ConfirmWidget::ConfirmWidget(QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::ConfirmWidget)
+    ui(new Ui::ConfirmWidget),
+    sonDir(), uset()
 {
     ui->setupUi(this);
+    connect(ui->textEdit1->verticalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(on_verticalScrollBar_valueChanged(int)));
+    connect(ui->textEdit2->verticalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(on_verticalScrollBar_valueChanged(int)));
+    index = 0;
 }
 
 ConfirmWidget::~ConfirmWidget()
@@ -19,6 +24,12 @@ ConfirmWidget::~ConfirmWidget()
 
 void ConfirmWidget::closeEvent(QCloseEvent *event)
 {
+    if(index >= inputVec.size())
+    {
+        QMessageBox::information(this, "提示", "您已完成所有程序对的确认！");
+        event->accept();
+        return;
+    }
     QMessageBox::StandardButton button;
     button = QMessageBox::warning(this, "警告", "未确认完所有等价程序对，是否关闭窗口？", QMessageBox::Yes|QMessageBox::No);
     if(button == QMessageBox::Yes)
@@ -27,15 +38,55 @@ void ConfirmWidget::closeEvent(QCloseEvent *event)
         event->ignore();
 }
 
+void ConfirmWidget::on_verticalScrollBar_valueChanged(int value) //两个textEdit实现滚轮同步
+{
+    QScrollBar *scrollbar1 = ui->textEdit1->verticalScrollBar();
+    QScrollBar *scrollbar2 = ui->textEdit2->verticalScrollBar();
+
+    scrollbar1->setValue(value);
+    scrollbar2->setValue(value);
+}
+
 void ConfirmWidget::showCode()
 {
-    if(index > inputVec.size())
+    if(index >= inputVec.size())
     {
         this->close();
         return;
     }
+
+    int index1 = sonDir.fileIndex(inputVec[index].file1);
+    int index2 = sonDir.fileIndex(inputVec[index].file2);
+    QString nowDir;
+    qDebug() << index1 << index2;
+    while(uset.find(index1) == uset.find(index2)) //如果两个文件已经在并查集的等价类中
+    {
+        equalPairsVec.push_back(inputVec[index]); //直接添加到最终等价程序对数组中
+        index++;
+        if(index >= inputVec.size())
+        {
+            this->close();
+            return;
+        }
+        qDebug() << "已在并查集" ;
+        nowDir = inputVec[index].file1.left(inputVec[index].file1.lastIndexOf('/'));
+        if(nowDir != sonDir.get_path()) //到下一个文件夹了
+            break;
+        index1 = sonDir.fileIndex(inputVec[index].file1);
+        index2 = sonDir.fileIndex(inputVec[index].file2);
+    }
+
+    nowDir = inputVec[index].file1.left(inputVec[index].file1.lastIndexOf('/'));
+    if(nowDir != sonDir.get_path()) //换到下个文件夹
+    {
+        sonDir.changeDir(nowDir);
+        uset = UnionFindSet(sonDir.get_count());
+    }
+    ui->label1->setText(inputVec[index].file1.mid(inputDirPath.length()+1));
+    ui->label2->setText(inputVec[index].file2.mid(inputDirPath.length()+1));
     ui->textEdit1->clear(); //清空
     ui->textEdit2->clear();
+
     QFile file1(inputVec[index].file1);
     if(file1.open(QIODevice::ReadOnly))
     {
@@ -55,7 +106,13 @@ void ConfirmWidget::showCode()
 void ConfirmWidget::on_equalButton_clicked()
 {
     equalPairsVec.push_back(inputVec[index]); //添加到最终等价程序对数组中
+    int index1 = sonDir.fileIndex(inputVec[index].file1);
+    int index2 = sonDir.fileIndex(inputVec[index].file2);
+    //qDebug() << index1 << index2;
+    uset.unite(index1, index2);
     index++;
+    for(int i=0;i<sonDir.get_count();++i)
+        qDebug() << sonDir.fileVec[i] << uset.uset[i];
     showCode(); //确认了结果之后自动推荐下一个程序对
 }
 
@@ -68,13 +125,15 @@ void ConfirmWidget::on_inequalButton_clicked()
 
 void ConfirmWidget::on_doubtButton_clicked()
 {
-    index++;
+    doubtPairsVec.push_back(inputVec[index]); //添加到最终存疑程序对数组中
+    inputVec.erase(inputVec.begin() + index); //从原等价程序对数组删除
     showCode();
 }
 
 void ConfirmWidget::getData(QString dirpath, QString filepath)
 {
     inputDirPath = dirpath;
+
     //存放等价程序对文件路径
     QFile file(filepath);
     if(file.open(QIODevice::ReadOnly))
@@ -93,6 +152,7 @@ void ConfirmWidget::getData(QString dirpath, QString filepath)
     }
     else
         return;
-    index = 0;
+    sonDir.changeDir(inputVec[index].file1.left(inputVec[index].file1.lastIndexOf('/')));
+    uset = UnionFindSet(sonDir.get_count());
     showCode();
 }
