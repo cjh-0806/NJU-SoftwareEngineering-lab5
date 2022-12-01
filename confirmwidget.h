@@ -2,15 +2,11 @@
 #define CONFIRMWIDGET_H
 
 #include <QWidget>
-#include <QString>
-#include <QFile>
+
 #include <QTextStream>
-#include <QDebug>
 #include <QMessageBox>
 #include <QCloseEvent>
 #include <QScrollBar>
-#include <QDir>
-#include <QFileInfo>
 #include <QDebug>
 
 #include <iostream>

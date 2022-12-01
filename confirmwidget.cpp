@@ -55,10 +55,16 @@ void ConfirmWidget::showCode()
         return;
     }
 
+    QString nowDir = inputVec[index].file1.left(inputVec[index].file1.lastIndexOf('/'));
+    if(nowDir != sonDir.get_path()) //换到下个文件夹
+    {
+        sonDir.changeDir(nowDir);
+        uset = UnionFindSet(sonDir.get_count());
+    }
+
     int index1 = sonDir.fileIndex(inputVec[index].file1);
     int index2 = sonDir.fileIndex(inputVec[index].file2);
-    QString nowDir;
-    qDebug() << index1 << index2;
+    //qDebug() << index1 << index2;
     while(uset.find(index1) == uset.find(index2)) //如果两个文件已经在并查集的等价类中
     {
         equalPairsVec.push_back(inputVec[index]); //直接添加到最终等价程序对数组中
@@ -71,35 +77,49 @@ void ConfirmWidget::showCode()
         qDebug() << "已在并查集" ;
         nowDir = inputVec[index].file1.left(inputVec[index].file1.lastIndexOf('/'));
         if(nowDir != sonDir.get_path()) //到下一个文件夹了
-            break;
+        {
+            sonDir.changeDir(nowDir);
+            uset = UnionFindSet(sonDir.get_count());
+        }
         index1 = sonDir.fileIndex(inputVec[index].file1);
         index2 = sonDir.fileIndex(inputVec[index].file2);
     }
 
-    nowDir = inputVec[index].file1.left(inputVec[index].file1.lastIndexOf('/'));
-    if(nowDir != sonDir.get_path()) //换到下个文件夹
-    {
-        sonDir.changeDir(nowDir);
-        uset = UnionFindSet(sonDir.get_count());
-    }
     ui->label1->setText(inputVec[index].file1.mid(inputDirPath.length()+1));
     ui->label2->setText(inputVec[index].file2.mid(inputDirPath.length()+1));
     ui->textEdit1->clear(); //清空
     ui->textEdit2->clear();
 
     QFile file1(inputVec[index].file1);
-    if(file1.open(QIODevice::ReadOnly))
-    {
-        QTextStream textStream(&file1);
-        while(!textStream.atEnd()) //按行显示文件内容
-            ui->textEdit1->append(textStream.readLine());
-    }
     QFile file2(inputVec[index].file2);
-    if(file2.open(QIODevice::ReadOnly))
+    if(file1.open(QIODevice::ReadOnly) && file2.open(QIODevice::ReadOnly))
     {
-        QTextStream textStream(&file2);
-        while(!textStream.atEnd())
-            ui->textEdit2->append(textStream.readLine());
+        QTextStream ts1(&file1);
+        QTextStream ts2(&file2);
+        while(!ts1.atEnd() && !ts2.atEnd()) //按行显示文件内容
+        {
+            QString line1 = ts1.readLine();
+            QString line2 = ts2.readLine();
+            if(line1.simplified() != line2.simplified())
+            {
+                ui->textEdit1->setTextColor(Qt::red);
+                ui->textEdit2->setTextColor(Qt::red);
+            }
+            ui->textEdit1->append(line1);
+            ui->textEdit2->append(line2);
+            ui->textEdit1->setTextColor(Qt::black);
+            ui->textEdit2->setTextColor(Qt::black);
+        }
+        while(!ts1.atEnd())
+        {
+            ui->textEdit1->setTextColor(Qt::red);
+            ui->textEdit1->append(ts1.readLine());
+        }
+        while(!ts2.atEnd())
+        {
+            ui->textEdit2->setTextColor(Qt::red);
+            ui->textEdit2->append(ts2.readLine());
+        }
     }
 }
 
@@ -111,14 +131,15 @@ void ConfirmWidget::on_equalButton_clicked()
     //qDebug() << index1 << index2;
     uset.unite(index1, index2);
     index++;
-    for(int i=0;i<sonDir.get_count();++i)
-        qDebug() << sonDir.fileVec[i] << uset.uset[i];
+    //for(int i=0;i<sonDir.get_count();++i)
+        //qDebug() << sonDir.fileVec[i] << uset.uset[i];
     showCode(); //确认了结果之后自动推荐下一个程序对
 }
 
 void ConfirmWidget::on_inequalButton_clicked()
 {
     inequalPairsVec.push_back(inputVec[index]); //添加到最终不等价程序对数组中
+    qDebug() << index;
     inputVec.erase(inputVec.begin() + index); //从原等价程序对数组删除
     showCode();
 }
