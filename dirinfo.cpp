@@ -12,13 +12,13 @@ void DirInfo::changeDir(QString src)
 
     QDir dir(path);
     QStringList filter;
-    filter << "*.cpp"; //过滤文件类型
+    filter << "*.cpp" << "*.c"; //过滤文件类型
     dir.setNameFilters(filter);
     QFileInfoList fileList = dir.entryInfoList(filter);
-    count = fileList.count();  //文件个数
-    qDebug() << count;
+    count = fileList.count();  //得到文件个数
+    //qDebug() << count;
 
-    fileVec.clear();
+    fileVec.clear(); //更新文件数组
     for(auto file : fileList)
         fileVec.push_back(file.absoluteFilePath());
 }

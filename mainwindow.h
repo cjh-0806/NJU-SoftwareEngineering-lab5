@@ -22,9 +22,10 @@ public:
     ~MainWindow();
 
 signals:
-    void sendData(QString, QString); //传递参数
+    void sendData(QString, QString); //向交互界面传递参数
 
 private slots:
+    //四个按钮的槽函数
     void on_importButton_clicked();
 
     void on_startButton_clicked();
@@ -32,7 +33,6 @@ private slots:
     void on_exportButton_clicked();
 
     void on_exitButton_clicked();
-
 
 private:
     Ui::MainWindow *ui;

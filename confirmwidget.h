@@ -36,7 +36,7 @@ public:
     void showCode();
 
 private slots:
-    void on_verticalScrollBar_valueChanged(int value);
+    void on_verticalScrollBar_valueChanged(int value); //两个textEdit实现滚轮同步
 
     void on_equalButton_clicked();
 
@@ -44,7 +44,7 @@ private slots:
 
     void on_doubtButton_clicked();
 
-    void getData(QString, QString);
+    void getData(QString, QString); //接收主界面传递来的参数
 
 private:
     Ui::ConfirmWidget *ui;

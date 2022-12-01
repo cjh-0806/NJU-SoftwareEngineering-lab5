@@ -54,9 +54,9 @@ void ConfirmWidget::showCode()
         this->close();
         return;
     }
-
+    //确认展示的是哪一对程序对
     QString nowDir = inputVec[index].file1.left(inputVec[index].file1.lastIndexOf('/'));
-    if(nowDir != sonDir.get_path()) //换到下个文件夹
+    if(nowDir != sonDir.get_path()) //换到下个子文件夹
     {
         sonDir.changeDir(nowDir);
         uset = UnionFindSet(sonDir.get_count());
@@ -84,7 +84,7 @@ void ConfirmWidget::showCode()
         index1 = sonDir.fileIndex(inputVec[index].file1);
         index2 = sonDir.fileIndex(inputVec[index].file2);
     }
-
+    //展示代码
     ui->label1->setText(inputVec[index].file1.mid(inputDirPath.length()+1));
     ui->label2->setText(inputVec[index].file2.mid(inputDirPath.length()+1));
     ui->textEdit1->clear(); //清空
@@ -100,7 +100,7 @@ void ConfirmWidget::showCode()
         {
             QString line1 = ts1.readLine();
             QString line2 = ts2.readLine();
-            if(line1.simplified() != line2.simplified())
+            if(line1.simplified() != line2.simplified()) //不同的内容标红
             {
                 ui->textEdit1->setTextColor(Qt::red);
                 ui->textEdit2->setTextColor(Qt::red);
@@ -128,26 +128,22 @@ void ConfirmWidget::on_equalButton_clicked()
     equalPairsVec.push_back(inputVec[index]); //添加到最终等价程序对数组中
     int index1 = sonDir.fileIndex(inputVec[index].file1);
     int index2 = sonDir.fileIndex(inputVec[index].file2);
-    //qDebug() << index1 << index2;
     uset.unite(index1, index2);
     index++;
-    //for(int i=0;i<sonDir.get_count();++i)
-        //qDebug() << sonDir.fileVec[i] << uset.uset[i];
     showCode(); //确认了结果之后自动推荐下一个程序对
 }
 
 void ConfirmWidget::on_inequalButton_clicked()
 {
     inequalPairsVec.push_back(inputVec[index]); //添加到最终不等价程序对数组中
-    qDebug() << index;
-    inputVec.erase(inputVec.begin() + index); //从原等价程序对数组删除
+    index++;
     showCode();
 }
 
 void ConfirmWidget::on_doubtButton_clicked()
 {
     doubtPairsVec.push_back(inputVec[index]); //添加到最终存疑程序对数组中
-    inputVec.erase(inputVec.begin() + index); //从原等价程序对数组删除
+    index++;
     showCode();
 }
 
@@ -155,7 +151,7 @@ void ConfirmWidget::getData(QString dirpath, QString filepath)
 {
     inputDirPath = dirpath;
 
-    //存放等价程序对文件路径
+    //存放等价程序对数组
     QFile file(filepath);
     if(file.open(QIODevice::ReadOnly))
     {
@@ -165,7 +161,7 @@ void ConfirmWidget::getData(QString dirpath, QString filepath)
         {
             line = textStream.readLine();
             int pos = line.indexOf(',');
-            QString file1name = dirpath + '/' + line.left(pos);
+            QString file1name = dirpath + '/' + line.left(pos); //存的是绝对路径
             QString file2name = dirpath + '/' + line.mid(pos+1);
             inputVec.push_back(Pairs(file1name, file2name));
         }

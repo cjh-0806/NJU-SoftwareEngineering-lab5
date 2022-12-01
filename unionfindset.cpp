@@ -30,13 +30,13 @@ int UnionFindSet::find(int x) //找到x的根节点
     }
 }
 
-bool UnionFindSet::unite(int x, int y)
+void UnionFindSet::unite(int x, int y)
 {
     int fx = find(x);
     int fy = find(y);
     if (fx == fy)
-        return false;
-    //判断两棵树的高度，将新的根节点选为节点数较多的那一个
+        return;
+    //将新的根节点选为节点数较多的那一个
     if (rank[fx] < rank[fy])
     {
         uset[fx] = fy;
@@ -47,7 +47,6 @@ bool UnionFindSet::unite(int x, int y)
         uset[fy] = fx;
         rank[fx] += rank[fy];
     }
-    return true;
 }
 
 UnionFindSet& UnionFindSet::operator=(const UnionFindSet& u)
